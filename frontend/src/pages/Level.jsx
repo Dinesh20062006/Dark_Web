@@ -129,6 +129,34 @@ const Level = () => {
           {/* Specific content rendering based on level type */}
           {levelData.content && (
              <div className="mt-4 p-4 bg-black border border-gray-800 rounded font-mono text-sm overflow-x-auto text-green-400">
+               {levelData.content.imageUrl && (
+                 <div className="mb-6 relative group">
+                    <div className="absolute -inset-0.5 bg-primary/20 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                    <div className="relative overflow-hidden rounded-lg border border-primary/30 bg-black">
+                      <div className="bg-primary/10 px-3 py-1 border-b border-primary/20 flex items-center justify-between">
+                        <span className="text-[10px] text-primary/70 uppercase tracking-widest font-bold flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Attached_Evidence_001.jpg
+                        </span>
+                        <div className="flex gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-500/50"></div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50"></div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500/50"></div>
+                        </div>
+                      </div>
+                      <img 
+                        src={levelData.content.imageUrl} 
+                        alt="Level Content" 
+                        className="max-w-full h-auto mx-auto block opacity-80 hover:opacity-100 transition-opacity duration-500"
+                        onLoad={(e) => {
+                          // Simple scanline effect overlay
+                          e.target.style.filter = 'contrast(1.1) brightness(0.9) sepia(0.1)';
+                        }}
+                      />
+                      <div className="absolute inset-0 pointer-events-none bg-scanlines opacity-10"></div>
+                    </div>
+                 </div>
+               )}
                {levelData.content.hexData && <div>{levelData.content.hexData}</div>}
                {levelData.content.logs && levelData.content.logs.map((log, i) => <div key={i}>{log}</div>)}
                {levelData.content.letters && <div>{levelData.content.letters.join(' ')}</div>}

@@ -137,21 +137,21 @@ router.post('/submit', [protect, submissionLimiter], async (req, res) => {
     }
 
     if (isCorrect) {
-      // Calculate points
-      // e.g. Max points 100.
-      // 2mins (120s) -> 100%
-      // 5mins (300s) -> 70%
-      // 10mins (600s) -> 50%
-      // >10mins -> 30%
-      let earnedPoints = level.maxPoints;
-      if (timeTaken <= 120) {
-        earnedPoints = level.maxPoints;
-      } else if (timeTaken <= 300) {
-        earnedPoints = Math.floor(level.maxPoints * 0.7);
-      } else if (timeTaken <= 600) {
-        earnedPoints = Math.floor(level.maxPoints * 0.5);
+      // Dynamic point reduction logic
+      let earnedPoints;
+      const minutesTaken = Math.floor(timeTaken / 60);
+
+      // Rule: If time taken exceeds thresholdTime, they could have seen the clue.
+      // In this case, points are fixed to 20.
+      if (timeTaken >= level.thresholdTime) {
+        earnedPoints = 20;
       } else {
-        earnedPoints = Math.floor(level.maxPoints * 0.3);
+        // Otherwise: -10 points for every minute (60s) taken
+        const reduction = minutesTaken * 10;
+        // Ensure points don't drop below 21 (to keep it higher than the clue-penalty) 
+        // or just use your previous min logic but ensure it's fair.
+        // Let's stick to your -10 per min, but if they are fast, they get more.
+        earnedPoints = Math.max(21, level.maxPoints - reduction);
       }
 
       // Record submission

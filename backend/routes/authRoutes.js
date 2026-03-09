@@ -53,6 +53,10 @@ router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
     // We allow login via email or username
     const user = await User.findOne({ 
       $or: [{ email: email.toLowerCase() }, { username: email }] 
@@ -60,11 +64,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
     if (user && (await bcrypt.compare(password, user.password))) {
       // Check if they need to solve the puzzle first?
-      // Wait, the flow says: "After signup, special puzzle appears. Only if user solves this, login becomes visible. 
-      // After login, users see Level 1."
-      // Let's implement puzzle validation here or in the frontend?
-      // The frontend logic can just hide login until puzzle solved. But the API should enforce it.
-      if (!user.puzzleSolved) {
+      if (!user.puzzleSolved && user.role !== 'admin') {
          return res.status(403).json({ 
            message: 'Must solve initialization puzzle first.',
            puzzleRequired: true 
@@ -85,8 +85,8 @@ router.post('/login', authLimiter, async (req, res) => {
       res.status(401).json({ message: 'Invalid email/username or password' });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
