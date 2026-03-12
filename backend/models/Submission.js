@@ -24,7 +24,7 @@ const submissionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['correct', 'incorrect'],
+    enum: ['correct', 'incorrect', 'skipped'],
     required: true,
   }
 }, { timestamps: true });
