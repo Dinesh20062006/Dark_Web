@@ -146,11 +146,9 @@ router.post('/submit', [protect, submissionLimiter], async (req, res) => {
       if (timeTaken >= level.thresholdTime) {
         earnedPoints = 20;
       } else {
-        // Otherwise: -10 points for every minute (60s) taken
-        const reduction = minutesTaken * 10;
-        // Ensure points don't drop below 21 (to keep it higher than the clue-penalty) 
-        // or just use your previous min logic but ensure it's fair.
-        // Let's stick to your -10 per min, but if they are fast, they get more.
+        // Otherwise: -20 points for every minute (60s) taken
+        const reduction = minutesTaken * 20;
+        // Ensure points don't drop below 21 (to keep it higher than the clue-penalty/threshold floor) 
         earnedPoints = Math.max(21, level.maxPoints - reduction);
       }
 
@@ -205,4 +203,60 @@ router.post('/submit', [protect, submissionLimiter], async (req, res) => {
   }
 });
 
+// @desc    Skip current level
+// @route   POST /api/levels/skip
+// @access  Private
+router.post('/skip', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const level = await Level.findOne({ levelNumber: user.currentLevel });
+
+    if (!level) return res.status(404).json({ message: 'Level not found' });
+
+    let startTime;
+    if (user.currentLevel === 1) {
+       startTime = user.updatedAt;
+    } else {
+       const lastCompleted = user.completedLevels.find(l => l.levelNumber === user.currentLevel - 1);
+       startTime = lastCompleted ? lastCompleted.completedAt : user.updatedAt;
+    }
+
+    const timeTaken = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
+
+    // Record submission as skipped
+    await Submission.create({
+      userId: user._id,
+      levelNumber: level.levelNumber,
+      answer: '[SKIPPED]',
+      timeTaken,
+      pointsEarned: 0,
+      status: 'skipped'
+    });
+
+    // Update User
+    user.completedLevels.push({
+      levelNumber: level.levelNumber,
+      pointsEarned: 0,
+      timeTaken,
+      completedAt: Date.now()
+    });
+    
+    // Total points don't increase
+    user.currentLevel += 1;
+    
+    await user.save();
+
+    res.json({
+      message: 'Level skipped.',
+      nextLevel: user.currentLevel,
+      totalPoints: user.totalPoints
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
+

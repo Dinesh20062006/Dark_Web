@@ -92,6 +92,22 @@ const Level = () => {
     }
   };
 
+  const handleSkip = async () => {
+    if (!window.confirm('Are you sure you want to skip this level? You will receive 0 points for it.')) {
+      return;
+    }
+
+    try {
+      await axios.post('/levels/skip');
+      setSuccess('Level skipped. Moving to next challenge...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error skipping level.');
+    }
+  };
+
   if (loading) return <div className="text-center mt-20 text-primary animate-pulse">Establishing secure connection...</div>;
   if (!levelData) return null;
 
@@ -109,9 +125,17 @@ const Level = () => {
         <h2 className="text-2xl font-bold text-white uppercase glitch" data-text={`LEVEL ${levelData.levelNumber} - ${levelData.title}`}>
           LEVEL {levelData.levelNumber} - {levelData.title}
         </h2>
-        <div className={`flex items-center space-x-2 text-xl font-mono ${timeElapsed > levelData.thresholdTime ? 'text-red-500' : 'text-primary'}`}>
-          <Clock className="w-5 h-5" />
-          <span>{formatTime(timeElapsed)}</span>
+        <div className="flex items-center space-x-6">
+          <div className={`flex items-center space-x-2 text-xl font-mono ${timeElapsed > levelData.thresholdTime ? 'text-red-500' : 'text-primary'}`}>
+            <Clock className="w-5 h-5" />
+            <span>{formatTime(timeElapsed)}</span>
+          </div>
+          <button 
+            onClick={handleSkip}
+            className="text-xs font-mono border border-red-500/50 text-red-500/70 hover:bg-red-500/10 px-2 py-1 rounded transition-colors"
+          >
+            SKIP_LEVEL {'>>'}
+          </button>
         </div>
       </div>
 
